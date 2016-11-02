@@ -18,25 +18,27 @@ module.exports = MediaCtrl = {
   },
 
   get: (req, res) => {
-    const mediaId = req.body.id || req.params.id
-    Media.findById(mediaId, (err, media) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          err,
-        })
-      }
-
+    const { id } = req.params
+    return Media.findById(id)
+    .then((media) => {
       if (!media) {
-        return res.status(404).json({
-          success: false,
+        return Promise.reject({
           message: 'Media not found!',
+          status: 404,
         })
       }
-
       return res.json({
         success: true,
+        action: 'get media',
         media,
+      })
+    })
+    .catch((err) => {
+      return res.status(err.status ? err.status : 500).json({
+        success: false,
+        action: 'get media',
+        message: err.message ? err.message : err,
+        err,
       })
     })
   },
@@ -69,33 +71,62 @@ module.exports = MediaCtrl = {
     })
   },
 
-  delete: (req, res) => {
-    const mediaId = req.body.id || req.params.id
-    Media.findById(mediaId, (err, media) => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          err,
-        })
-      }
-
+  edit: (req, res) => {
+    const { id } = req.params
+    const { metadata } = req.body
+    return Media.findById(id)
+    .then((media) => {
       if (!media) {
-        return res.status(404).json({
-          success: false,
+        return Promise.reject({
           message: 'Media not found!',
+          status: 404,
         })
       }
-      return media.remove((error) => {
-        if (error) {
-          return res.status(500).json({
-            success: false,
-            error,
-          })
-        }
-        return res.json({
-          success: true,
-          message: 'Media removed.',
+      if (metadata) media.metadata = metadata
+      return media.save()
+    })
+    .then((newMedia) => {
+      return res.json({
+        success: true,
+        action: 'edit media metadata',
+        media: newMedia,
+      })
+    })
+    .catch((err) => {
+      return res.status(err.status ? err.status : 500).json({
+        success: false,
+        action: 'edit media metadata',
+        message: err.message ? err.message : err,
+        err,
+      })
+    })
+  },
+
+  delete: (req, res) => {
+    const { id } = req.params
+    return Media.findById(id)
+    .then((media) => {
+      if (!media) {
+        return Promise.reject({
+          message: 'Media not found!',
+          status: 404,
         })
+      }
+      return media.remove()
+    })
+    .then((media) => {
+      return res.json({
+        success: true,
+        action: 'delete media',
+        media,
+      })
+    })
+    .catch((err) => {
+      return res.status(err.status ? err.status : 500).json({
+        success: false,
+        action: 'delete media',
+        message: err.message ? err.message : err,
+        err,
       })
     })
   },

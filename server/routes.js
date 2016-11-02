@@ -71,10 +71,10 @@ module.exports = (express, app) => {
    * MEDIAS
    */
   api.get('/medias', AuthRequired(), MediaCtrl.index)
-  api.get('/media/:id?', MediaCtrl.get)
+  api.get('/media/:id', MediaCtrl.get)
   api.post('/media', AuthRequired(), MediaCtrl.create)
-  // api.patch('/media/:id?', AuthRequired(), MediaCtrl.edit)
-  api.delete('/media/:id?', AuthRequired(), MediaCtrl.delete)
+  api.patch('/media/:id/metadata', AuthRequired(), MediaCtrl.edit)
+  api.delete('/media/:id', AuthRequired(), MediaCtrl.delete)
   api.post('/media/upload', AuthRequired(), upload.single('media'), MediaCtrl.upload)
 
 

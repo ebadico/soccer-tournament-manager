@@ -13,7 +13,7 @@ chai.use(chaiHttp)
  * API
  */
 describe('Media - API', () => {
-  let mediaId, userAuthToken, storedMediaPath, storedThumbPath, preUploadMediaStat
+  let mediaId, userAuthToken, storedMediaPath, storedThumbPath, preUploadMediaStat, mediaWithMetaId
 
   // generate a auth dummy token
   before(() => {
@@ -96,6 +96,7 @@ describe('Media - API', () => {
       expect(body.success).toBe(true)
       expect(body.media).toExist()
       expect(body.media.metadata).toExist()
+      mediaWithMetaId = body.media._id
       let metadata
       try {
         metadata = JSON.parse(body.media.metadata)
@@ -103,6 +104,36 @@ describe('Media - API', () => {
         done(e)
       } finally {
         expect(metadata).toBeA('object')
+      }
+      done()
+    })
+  })
+
+  it('should EDIT a media metadata', (done) => {
+    let mediaFile = path.join( __dirname, './media/test.jpeg' )
+    chai.request(app)
+    .patch(`/api/media/${mediaWithMetaId}/metadata`)
+    .set('Authorization', userAuthToken)
+    .send({
+      metadata: {
+        myNewMetadata: 'myNewMetadata',
+      }
+    })
+    .end((err, res) => {
+      if (err) throw err
+      let {body} = res
+      expect(res.status).toBe(200)
+      expect(body.success).toBe(true)
+      expect(body.media).toExist()
+      expect(body.media.metadata).toExist()
+      let metadata
+      try {
+        metadata = JSON.parse(body.media.metadata)
+      } catch (e) {
+        done(e)
+      } finally {
+        expect(metadata).toBeA('object')
+        expect(metadata.myNewMetadata).toExist()
       }
       done()
     })
