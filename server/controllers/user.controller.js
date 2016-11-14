@@ -25,7 +25,7 @@ module.exports = {
   auth: (req, res) => {
     const { body: user } = req
     let fetchedUser
-    return User.findOne({ username: user.username }).exec()
+    return User.findOne({ email: user.email }).exec()
     .then((usr) => {
       if (!usr) {
         return Promise.reject({
@@ -43,6 +43,7 @@ module.exports = {
       token.success = true
       token.status = 200
       token.user = {
+        email: fetchedUser.email,
         username: fetchedUser.username,
         id: fetchedUser._id,
       }
@@ -59,6 +60,7 @@ module.exports = {
     const { body: newUser } = req
     const user = new User({
       username: newUser.username,
+      email: newUser.email,
       password: newUser.password,
       admin: newUser.admin,
     })
@@ -128,6 +130,62 @@ module.exports = {
         exist: true,
       })
     })
+  },
+  usernameExist: (req, res) => {
+    const username = req.body.username || req.params.username
+    if (!username) {
+      return res.status(400).json({
+        success: false,
+        message: 'No username provided!',
+      })
+    }
+    return User.userExist('username', username)
+      .then((usr) => {
+        if (!usr) {
+          return res.status(200).json({
+            success: true,
+            exist: false,
+          })
+        }
+        return res.status(409).json({
+          success: true,
+          exist: true,
+        })
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          success: false,
+          message: err,
+        })
+      })
+  },
+  userEmailExist: (req, res) => {
+    const email = req.body.email || req.params.email
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'No user email provided!',
+      })
+    }
+    return User.userExist('email', email)
+      .then((usr) => {
+        if (!usr) {
+          return res.status(200).json({
+            success: true,
+            exist: false,
+          })
+        }
+        return res.status(409).json({
+          success: true,
+          exist: true,
+        })
+      })
+      .catch((err) => {
+        return res.status(500).json({
+          success: false,
+          message: err,
+        })
+      })
   },
   adminDelete: (req, res) => {
     const userId = req.body.id || req.params.id;

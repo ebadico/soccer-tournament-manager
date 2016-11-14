@@ -64,6 +64,8 @@ module.exports = (express, app) => {
   api.post('/user/auth', UserCtrl.auth)
   api.post('/user', UserCtrl.create)
   api.get('/user/:username/exist', UserCtrl.exist)
+  api.get('/user/username/:username/exist', UserCtrl.usernameExist)
+  api.get('/user/email/:email/exist', UserCtrl.userEmailExist)
   api.get('/users', AuthRequired('admin'), UserCtrl.index)
   api.delete('/user/:id', AuthRequired('admin'), UserCtrl.adminDelete)
 

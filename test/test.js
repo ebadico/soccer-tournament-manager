@@ -20,7 +20,8 @@ global.getRandomInt = (min, max) => {
 
 require('./server/server.test.js')
 
-require('./users/user.test.js')
+require('./users/user.model.test.js')
+require('./users/user.api.test.js')
 
 require('./medias/media.model.test.js')
 require('./medias/media.api.test.js')

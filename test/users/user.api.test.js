@@ -7,17 +7,20 @@ const User = require(testenv.serverdir + 'models/user.model')
 
 chai.use(chaiHttp)
 
-describe('User', () => {
+describe('User - API', () => {
   var admin_token, user_token
   var normal_user = {
-    username: 'Simone' + Date.now(),
+    username: 'TestUser' + Date.now(),
     password: 'password'
   }
+  normal_user.email = `${normal_user.username}@randomprovider.com`
+
   var admin_user = {
     username: 'ADMIN' + Date.now(),
     password: 'password',
     admin: true,
   }
+  admin_user.email = `${admin_user.username}@randomprovider.com`
 
   after(() => {
     testenv.adminAuthToken = admin_token
@@ -55,6 +58,34 @@ describe('User', () => {
         done()
       })
     })
+    it('should NOT create a normal user with the same email', (done) => {
+      let testNewUser = Object.assign({}, normal_user)
+      testNewUser.username = 'randomUsername'
+      chai.request(app)
+      .post('/api/user')
+      .send(testNewUser)
+      .end((err, res) => {
+        let { body } = res
+        expect(res.status).toBe(400)
+        expect(body.success).toBe(false)
+        expect(body.message).toExist()
+        done()
+      })
+    })
+    it('should NOT create a normal user with the same username', (done) => {
+      let testNewUser = Object.assign({}, normal_user)
+      testNewUser.email = 'newRandomEmail@test.com'
+      chai.request(app)
+      .post('/api/user')
+      .send(testNewUser)
+      .end((err, res) => {
+        let { body } = res
+        expect(res.status).toBe(400)
+        expect(body.success).toBe(false)
+        expect(body.message).toExist()
+        done()
+      })
+    })
     it('should return error if username exist', (done) => {
       chai.request(app)
       .post('/api/user')
@@ -75,9 +106,32 @@ describe('User', () => {
         done()
       })
     })
+
     it('should given an username check if exists', (done) => {
       chai.request(app)
       .get(`/api/user/${normal_user.username}/exist`)
+      .end((err,res) => {
+        expect(res.status).toBe(409)
+        expect(res.body.success).toBe(true)
+        expect(res.body.exist).toBe(true)
+        done()
+      })
+    })
+
+    it('[NEW METHOD] should given an username check if exists', (done) => {
+      chai.request(app)
+      .get(`/api/user/username/${normal_user.username}/exist`)
+      .end((err,res) => {
+        expect(res.status).toBe(409)
+        expect(res.body.success).toBe(true)
+        expect(res.body.exist).toBe(true)
+        done()
+      })
+    })
+
+    it('[NEW METHOD] should given an user email check if exists', (done) => {
+      chai.request(app)
+      .get(`/api/user/email/${normal_user.email}/exist`)
       .end((err,res) => {
         expect(res.status).toBe(409)
         expect(res.body.success).toBe(true)
