@@ -27,6 +27,7 @@ class AdminUserList extends React.Component {
         <tr key={i}>
           <td style={{ cursor: 'pointer' }} onClick={() => this.onDeleteUser(user)}> <i className="fa fa-remove"></i> </td>
           <td>{ user.username }</td>
+          <td>{ user.email }</td>
           <td>{ user.admin ? 'admin' : 'normal' }</td>
         </tr>
       ))
@@ -43,6 +44,7 @@ class AdminUserList extends React.Component {
               <tr>
                 <th style={{ width: '50px' }}> <i className="fa fa-cog"></i> </th>
                 <th>User</th>
+                <th>Email</th>
                 <th>Type</th>
               </tr>
               { this.renderList() }
