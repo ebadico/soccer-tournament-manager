@@ -15,6 +15,11 @@ export const usernameExist = (exist) => ({
   exist,
 })
 
+export const emailExist = (exist) => ({
+  type: 'NEW_USERNAME_EMAIL_EXIST',
+  exist,
+})
+
 export const validPassword = (valid) => ({
   type: 'VALID_PASSWORD',
   valid,
@@ -25,13 +30,23 @@ export const validPasswordCheck = (valid) => ({
   valid,
 })
 
-export const signinUsernameError = (error) => ({
+export const signinUsernameError = (error = null) => ({
   type: 'SIGNIN_USERNAME_ERROR',
+  error,
+})
+
+export const signinEmailError = (error = null) => ({
+  type: 'SIGNIN_EMAIL_ERROR',
   error,
 })
 
 export const signinPasswordError = (error) => ({
   type: 'SIGNIN_PASSWORD_ERROR',
+  error,
+})
+
+export const signinPasswordCheckError = (error) => ({
+  type: 'SIGNIN_PASSWORD_CHECK_ERROR',
   error,
 })
 
@@ -43,10 +58,11 @@ export const signInSuccess = (success) => ({
 export const checkUserExist = (username = '') => {
   return (dispatch) => {
     Api
-      .get(`/user/${username}/exist`)
+      .get(`/user/username/${username}/exist`)
       .then((res) => {
         const { data } = res
         dispatch(usernameExist(data.exist))
+        dispatch(signinUsernameError())
         return res
       })
       .catch((err) => {
@@ -58,12 +74,32 @@ export const checkUserExist = (username = '') => {
   }
 }
 
-export const startSignin = (username, password) => {
+export const checkEmailExist = (email = '') => {
+  return (dispatch) => {
+    Api
+      .get(`/user/email/${email}/exist`)
+      .then((res) => {
+        const { data } = res
+        dispatch(emailExist(data.exist))
+        dispatch(signinEmailError())
+        return res
+      })
+      .catch((err) => {
+        const { data } = err.response
+        dispatch(emailExist(data.exist))
+        dispatch(signinEmailError('Email exist'))
+        return data
+      })
+  }
+}
+
+export const startSignin = (username, password, email) => {
   return (dispatch) => {
     signinFetching(true)
     return Api.post('/user', {
       username,
       password,
+      email,
     })
     .then((res) => {
       dispatch(signinFetching(false))

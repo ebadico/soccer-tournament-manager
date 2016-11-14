@@ -18,11 +18,11 @@ export const logout = () => ({
   type: 'AUTH:LOGOUT',
 })
 
-export const login = (username = '', password = '') => {
+export const login = (email = '', password = '') => {
   return (dispatch) => {
     dispatch(authLoading(true))
     return Api.post('/user/auth', {
-      username,
+      email,
       password,
     })
     .then((res) => {

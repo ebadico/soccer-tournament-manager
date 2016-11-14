@@ -100,7 +100,7 @@ export class AdminRoutes extends React.Component {
     const { store } = this.props
     //  CHECK TOKEN AND INVALIDATE IF NEEDED
     return dispatch(getUserData()).then((res) => {
-      if (res.status !== 200) {
+      if (res.status !== 200 || !res.data.user || !res.data.success) {
         store.dispatch(setAuthToken(''))
       }
       return res

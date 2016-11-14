@@ -33,12 +33,12 @@ class Login extends React.Component {
   loginHandler(e) {
     e.preventDefault()
     const { dispatch } = this.props
-    const username = this.usernameInput.value
+    const email = this.userEmail.value
     const password = this.passwordInput.value
-    if (!username.length || !password.length) {
+    if (!email.length || !password.length) {
       dispatch(loginFormError('Username or Password not provided!'))
     } else {
-      dispatch(login(username, password)).then(() => browserHistory.push('/admin'))
+      dispatch(login(email, password)).then(() => browserHistory.push('/admin'))
     }
   }
 
@@ -55,7 +55,7 @@ class Login extends React.Component {
       <div id="login-form">
         <h1 className="title">Login</h1>
         <form>
-          <input className="form-control" id="username-input" type="text" ref={(c) => { this.usernameInput = c }} placeholder="username" />
+          <input className="form-control" id="username-input" type="email" ref={(c) => { this.userEmail = c }} placeholder="email" />
           <input className="form-control" id="password-input" type="password" ref={(c) => { this.passwordInput = c }} placeholder="password" />
           <div>
             <input className="login-button" type="button" value={this.loadingHandler()} onClick={(e) => this.loginHandler(e)} />
