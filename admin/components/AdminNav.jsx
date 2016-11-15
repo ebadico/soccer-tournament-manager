@@ -1,6 +1,6 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { Link } from 'react-router'
+import { Link, browserHistory } from 'react-router'
 import { startLogout, openToastr, setAdminViewedSeason } from 'actions'
 
 require('!style!css!sass!../styles/admin/admin-nav.scss')
@@ -119,9 +119,9 @@ class AdminNav extends React.Component {
                     </li>
                   </ul>
                 </li>
-                <li className="dropdown user user-menu pointer">
+                <li className="dropdown user user-menu pointer" onClick={() => browserHistory.push('/admin/me')}>
                   <a className="dropdown-toggle" data-toggle="dropdown">
-                    <span className="hidden-xs">{user.username}</span>
+                    <i className="fa fa-cog"></i><span className="hidden-xs">{user.username}</span>
                   </a>
                 </li>
                 <li className="pointer" onClick={() => this.onLogout()}>

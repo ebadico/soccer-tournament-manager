@@ -90,6 +90,7 @@ class AdminPostsList extends React.Component {
 AdminPostsList.propTypes = {
   dispatch: React.PropTypes.func,
   posts: React.PropTypes.object,
+  loading: React.PropTypes.bool,
 }
 
 

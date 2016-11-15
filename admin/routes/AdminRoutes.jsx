@@ -81,6 +81,10 @@ const genRoutes = (adminRoutes) => {
           getComponents: (a, cb) => require.ensure([], () => cb(null, require('AdminUsersList').default)),
         },
         {
+          path: 'me',
+          getComponents: (a, cb) => require.ensure([], () => cb(null, require('AdminUserPage').default)),
+        },
+        {
           path: 'settings',
           getComponents: (a, cb) => require.ensure([], () => cb(null, require('Settings').default)),
         },

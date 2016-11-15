@@ -28,6 +28,203 @@ module.exports = {
       })
     })
   },
+
+  /**
+   * Check Password
+   * NB: check req id with current user in req.user
+   * avoid check for other user password on api route, if not admin
+   */
+  checkPassword: (req, res) => {
+    const { id } = req.params
+    const { password } = req.body
+    if (!id) {
+      return res.status(403).json({
+        success: false,
+        action: 'check password',
+        message: 'No user id provided',
+      })
+    }
+    if (!password) {
+      return res.status(403).json({
+        success: false,
+        action: 'check password',
+        message: 'No user password provided',
+      })
+    }
+    // Not request user account
+    if (id !== req.user._id && !req.user.admin) {
+      return res.status(401).json({
+        success: false,
+        action: 'check password',
+        message: 'Accessing another account resources, access forbiden.',
+      })
+    }
+    return User.findOne({ _id: id })
+    .then((user) => {
+      if (!user) {
+        return Promise.reject({
+          status: 404,
+          message: 'No user found',
+        })
+      }
+      return user.checkPassword(password)
+    })
+    .then((check) => {
+      return res.status(check.success ? 200 : 401).json({
+        status: check.success ? 200 : 401,
+        success: check.success,
+        action: 'check password',
+      })
+    })
+    .catch((err) => {
+      return res.status(err.status ? err.status : 500).json({
+        success: false,
+        message: err.message ? err.message : err,
+        action: 'check password',
+      })
+    })
+  },
+
+  /**
+   * Change Password
+   * NB: check req id with current user in req.user
+   * avoid check for other user password on api route, if not admin
+   */
+  changePassword: (req, res) => {
+    const { id } = req.params
+    const { password, newPassword } = req.body
+    let fetchedUser
+    if (!id) {
+      return res.status(403).json({
+        success: false,
+        action: 'check password',
+        message: 'No user id provided',
+      })
+    }
+    if (!password) {
+      return res.status(403).json({
+        success: false,
+        action: 'check password',
+        message: 'No user password provided',
+      })
+    }
+    // Not request user account
+    if (id !== req.user._id && !req.user.admin) {
+      return res.status(401).json({
+        success: false,
+        action: 'check password',
+        message: 'Accessing another account resources, access forbiden.',
+      })
+    }
+    return User.findOne({ _id: id })
+    .then((user) => {
+      if (!user) {
+        return Promise.reject({
+          status: 404,
+          message: 'No user found',
+        })
+      }
+      fetchedUser = user
+      return user.checkPassword(password)
+    })
+    .then((check) => {
+      if (!check.success) {
+        return Promise.reject({
+          message: 'Password not correct.',
+          status: 401,
+        })
+      }
+      fetchedUser.password = newPassword
+      return fetchedUser.save()
+    })
+    .then((user) => {
+      return user.auth()
+    })
+    .then((token) => {
+      token.success = true
+      token.status = 200
+      token.user = {
+        email: fetchedUser.email,
+        username: fetchedUser.username,
+        id: fetchedUser._id,
+      }
+      return res.json(token)
+    })
+    .catch((err) => {
+      return res.status(err.status ? err.status : 500).json({
+        success: false,
+        message: err.message ? err.message : err,
+        action: 'check password',
+      })
+    })
+  },
+
+  /**
+   * Change Email
+   * NB: check req id with current user in req.user
+   * avoid check for other user password on api route, if not admin
+   */
+  changeEmail: (req, res) => {
+    const { id } = req.params
+    const { email } = req.body
+    if (!id) {
+      return res.status(403).json({
+        success: false,
+        action: 'user change email',
+        message: 'No user id provided',
+      })
+    }
+    if (!email) {
+      return res.status(403).json({
+        success: false,
+        action: 'user change email',
+        message: 'No user email provided',
+      })
+    }
+    // Not request user account
+    if (id !== req.user._id && !req.user.admin) {
+      return res.status(401).json({
+        success: false,
+        action: 'user change email',
+        message: 'Accessing another account resources, access forbiden.',
+      })
+    }
+    return User.find({ email })
+    .then((users) => {
+      if (users.length) {
+        return Promise.reject({
+          status: 403,
+          message: 'User with this email already exist',
+        })
+      }
+      return User.findOne({ _id: id })
+    })
+    .then((user) => {
+      if (!user) {
+        return Promise.reject({
+          status: 404,
+          message: 'User not foun',
+        })
+      }
+      user.email = email
+      return user.save()
+    })
+    .then((user) => {
+      return res.json({
+        success: true,
+        action: 'user change email',
+        user,
+      })
+    })
+    .catch((err) => {
+      return res.status(err.status ? err.status : 500).json({
+        success: false,
+        message: err.message ? err.message : err,
+        action: 'user change email',
+      })
+    })
+  },
+
   auth: (req, res) => {
     const { body: user } = req
     let fetchedUser
@@ -235,7 +432,7 @@ module.exports = {
       if (!usr) {
         return res.status(404).json({
           success: false,
-          message: `User ${user.username} don\'t exists!`,
+          message: `User ${user.username} don't exists!`,
           status: 404,
         })
       }
