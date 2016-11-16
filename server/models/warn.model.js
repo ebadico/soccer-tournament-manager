@@ -1,5 +1,4 @@
 const mongoose = require('../config/database')
-const forkHandlers = require('../fork/fork.handlers')
 
 const warnSchema = mongoose.Schema({
   match: {
@@ -19,20 +18,22 @@ const warnSchema = mongoose.Schema({
   },
 })
 
-warnSchema.post('save', (warn, done) => {
-  forkHandlers.playerStatsUpdate(warn).then(() => {
-    done()
-  }).catch((err) => {
-    done(err)
-  })
-})
-warnSchema.post('remove', (warn, done) => {
-  return forkHandlers.playerStatsUpdate(warn).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
+warnSchema.post('save', (doc) => {
+  const Player = mongoose.model('player')
+  const Warn = mongoose.model('warn')
+  return Warn.count({ player: doc.player })
+  .then((warns) => {
+    return Player.update({ _id: doc.player }, { $set: { warns } })
   })
 })
 
+warnSchema.post('remove', (doc) => {
+  const Player = mongoose.model('player')
+  const Warn = mongoose.model('warn')
+  return Warn.count({ player: doc.player })
+  .then((warns) => {
+    return Player.update({ _id: doc.player }, { $set: { warns } })
+  })
+})
 
 module.exports = mongoose.model('warn', warnSchema, 'warns')

@@ -2,7 +2,7 @@ const mongoose = require('../config/database')
 const path = require('path')
 const fs = require('fs')
 const secrets = require('./../config/secrets')
-const fork = require('../fork/fork.handlers')
+const Jimp = require('jimp')
 
 const MediaSchema = mongoose.Schema({
   filename: { type: String },
@@ -38,15 +38,16 @@ MediaSchema.pre('save', function preSave(done) {
   done()
 })
 
-MediaSchema.post('save', (media, done) => {
+MediaSchema.post('save', (media) => {
   if (process.env.MEDIA_MODEL_TEST_SUITE !== 'true') {
-    return fork.generateThumbnail(media).then(() => {
-      return done()
-    }).catch((err) => {
-      return done(err)
-    })
+    return media.generateThumbnail()
+    // return fork.generateThumbnail(media).then(() => {
+    //   return done()
+    // }).catch((err) => {
+    //   return done(err)
+    // })
   }
-  return done()
+  return null
 })
 
 MediaSchema.post('remove', (media, done) => {
@@ -63,5 +64,27 @@ MediaSchema.post('remove', (media, done) => {
   })
 })
 
+/**
+ * METHODS
+ */
+
+MediaSchema.methods.generateThumbnail = function generateThumbnail() {
+  const media = this
+  const thumbPath = path.join(process.cwd(), `${process.env.UPLOAD_DIRNAME}/thumbnail/`)
+  const fsPath = path.join(process.cwd(), media.path)
+  fs.stat(thumbPath, (err, stat) => {
+    if (!stat) fs.mkdir(thumbPath)
+  })
+  return Jimp.read(fsPath)
+    .then((image) => {
+      // original extension poi boh ch'o sonno
+      return Promise.resolve(
+        image
+        .resize(Jimp.AUTO, 250)
+        .quality(50)
+        .write(thumbPath + media.filename)
+      )
+    })
+}
 
 module.exports = mongoose.model('media', MediaSchema, 'medias')

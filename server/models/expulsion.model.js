@@ -1,5 +1,4 @@
 const mongoose = require('../config/database')
-const forkHandlers = require('../fork/fork.handlers')
 
 const expulsionSchema = mongoose.Schema({
   match: {
@@ -19,20 +18,23 @@ const expulsionSchema = mongoose.Schema({
   },
 })
 
-expulsionSchema.post('save', (expulsion, done) => {
-  return forkHandlers.playerStatsUpdate(expulsion).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
-  })
-})
-expulsionSchema.post('remove', (expulsion, done) => {
-  return forkHandlers.playerStatsUpdate(expulsion).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
+
+expulsionSchema.post('save', (doc) => {
+  const Player = mongoose.model('player')
+  const Expulsion = mongoose.model('expulsion')
+  return Expulsion.count({ player: doc.player })
+  .then((expulsions) => {
+    return Player.update({ _id: doc.player }, { $set: { expulsions } })
   })
 })
 
+expulsionSchema.post('remove', (doc) => {
+  const Player = mongoose.model('player')
+  const Expulsion = mongoose.model('expulsion')
+  return Expulsion.count({ player: doc.player })
+  .then((expulsions) => {
+    return Player.update({ _id: doc.player }, { $set: { expulsions } })
+  })
+})
 
 module.exports = mongoose.model('expulsion', expulsionSchema, 'expulsions')

@@ -79,4 +79,47 @@ teamSchema.post('remove', (team, done) => {
   .catch(done)
 })
 
+
+/**
+ * Instance Methods
+ */
+
+/**
+ * teamStatsUpdate
+ * @param  {[Bollean]} returnNewDocument if updating only or findandUpdate returning the new Document
+ * @return {[type]}                   [description]
+ */
+teamSchema.methods.teamUpdateStats = function teamUpdateStats(returnNewDocument) {
+  const team = this
+  const Team = mongoose.model('team')
+  const Match = mongoose.model('match')
+  const Score = mongoose.model('score')
+  return Promise.all([
+    Match.count({ winner: team._id, played: true }),
+    Match.count({ loser: team._id, played: true }),
+    Match.count({ $or: [{ teamHome: team._id }, { teamAway: team._id }], played: true, winner: null, loser: null }),
+    Score.count({ teamScorer: team._id }),
+    Score.count({ teamTaker: team._id }),
+  ])
+  .spread((wins, losts, draws, goalScored, goalTaken) => {
+    const updates = {
+      $set: {
+        wins,
+        losts,
+        draws,
+        goalScored,
+        goalTaken,
+        points: (wins * 3) + draws,
+      },
+    }
+    if (returnNewDocument) {
+      return Team.findAndUpdate({ _id: team._id }, updates, { new: true })
+    }
+    return Team.update({ _id: team._id }, updates)
+  })
+  .catch((err) => {
+    console.error(err)
+  })
+}
+
 module.exports = mongoose.model('team', teamSchema, 'teams')

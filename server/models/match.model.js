@@ -1,6 +1,5 @@
 const { Promise } = global
 const mongoose = require('../config/database')
-const forkHandlers = require('../fork/fork.handlers')
 
 const matchSchema = mongoose.Schema({
   season: {
@@ -82,27 +81,43 @@ matchSchema.pre('save', function preSaveHookMatch(next) {
   next()
 })
 
-matchSchema.post('save', (match, done) => {
+matchSchema.post('save', (match) => {
   if (match.played) {
-    return forkHandlers.teamStatsUpdate(match).then(() => {
-      return done()
-    })
-    .catch((err) => {
-      return done(err)
-    })
+    const Team = mongoose.model('team')
+    return Team
+      .find({ _id: { $in: [match.teamHome, match.teamAway] } })
+      .then((teams) => {
+        return Promise.all([
+          teams[0].teamUpdateStats(),
+          teams[1].teamUpdateStats(),
+        ])
+      })
+      .then((update) => {
+        console.log(">>>", update)
+      })
+      .catch((err) => {
+        console.error(err)
+      })
   }
-  return done()
+  return null
 })
 
-matchSchema.post('remove', (match, done) => {
-  return forkHandlers.teamStatsUpdate(match)
-  .then(() => {
-    return done()
-  })
-  .catch((err) => {
-    console.error('teamStatsUpdate', err);
-    return done(err)
-  })
+matchSchema.post('remove', (match) => {
+  if (match.played) {
+    const Team = mongoose.model('team')
+    return Team
+      .find({ _id: { $in: [match.teamHome, match.teamAway] } })
+      .then((teams) => {
+        return Promise.all([
+          teams[0].teamUpdateStats(),
+          teams[1].teamUpdateStats(),
+        ])
+      })
+      .catch((err) => {
+        console.error(err)
+      })
+  }
+  return null
 })
 
 /**
@@ -120,12 +135,12 @@ matchSchema.methods.removeMatchData = function removeMatchData() {
     Warn.find({ match: match._id }),
     Expulsion.find({ match: match._id }),
     Attendance.find({ match: match._id }),
-  ]).then((data) => {
+  ]).spread((scores, warns, expulsions, attendances) => {
     const promises = []
-    data[0].forEach((score) => promises.push(score.remove()))
-    data[1].forEach((warn) => promises.push(warn.remove()))
-    data[2].forEach((expulsion) => promises.push(expulsion.remove()))
-    data[3].forEach((attendance) => promises.push(attendance.remove()))
+    scores.forEach((score) => promises.push(score.remove()))
+    warns.forEach((warn) => promises.push(warn.remove()))
+    expulsions.forEach((expulsion) => promises.push(expulsion.remove()))
+    attendances.forEach((attendance) => promises.push(attendance.remove()))
     return Promise.all(promises)
   })
   .then(() => {
@@ -146,6 +161,8 @@ matchSchema.methods.cascadeRemove = function cascadeRemove() {
 }
 
 matchSchema.methods.reset = function reset() {
+  const Team = mongoose.model('team')
+  let savedMatch
   return this.removeMatchData()
   .then((match) => {
     match.played = false
@@ -156,9 +173,17 @@ matchSchema.methods.reset = function reset() {
     return match.save()
   })
   .then((match) => {
-    return forkHandlers.teamStatsUpdate(match).then(() => {
-      return Promise.resolve(match)
-    })
+    savedMatch = match
+    return Team.find({ _id: { $in: [match.teamHome, match.teamAway] } })
+  })
+  .then((teams) => {
+    return Promise.all([
+      teams[0].teamUpdateStats(),
+      teams[1].teamUpdateStats(),
+    ])
+  })
+  .then(() => {
+    return Promise.resolve(savedMatch)
   })
 }
 

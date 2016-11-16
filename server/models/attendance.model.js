@@ -1,5 +1,4 @@
 const mongoose = require('../config/database')
-const forkHandlers = require('../fork/fork.handlers')
 
 const attendanceSchema = mongoose.Schema({
   season: {
@@ -19,18 +18,21 @@ const attendanceSchema = mongoose.Schema({
   },
 })
 
-attendanceSchema.post('save', (attendance, done) => {
-  return forkHandlers.playerStatsUpdate(attendance).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
+attendanceSchema.post('save', (doc) => {
+  const Player = mongoose.model('player')
+  const Attendance = mongoose.model('attendance')
+  return Attendance.count({ player: doc.player })
+  .then((attendance) => {
+    return Player.update({ _id: doc.player }, { $set: { attendance } })
   })
 })
-attendanceSchema.post('remove', (attendance, done) => {
-  return forkHandlers.playerStatsUpdate(attendance).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
+
+attendanceSchema.post('remove', (doc) => {
+  const Player = mongoose.model('player')
+  const Attendance = mongoose.model('attendance')
+  return Attendance.count({ player: doc.player })
+  .then((attendance) => {
+    return Player.update({ _id: doc.player }, { $set: { attendance } })
   })
 })
 

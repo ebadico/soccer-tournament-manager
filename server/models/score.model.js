@@ -1,5 +1,4 @@
 const mongoose = require('../config/database')
-const forkHandlers = require('../fork/fork.handlers')
 
 const scoreSchema = mongoose.Schema({
   season: {
@@ -42,18 +41,21 @@ scoreSchema.pre('validate', function matchPreValidation(next) {
   next()
 })
 
-scoreSchema.post('save', (score, done) => {
-  return forkHandlers.playerStatsUpdate(score).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
+scoreSchema.post('save', (doc) => {
+  const Player = mongoose.model('player')
+  const Score = mongoose.model('score')
+  return Score.count({ player: doc.player })
+  .then((goals) => {
+    return Player.update({ _id: doc.player }, { $set: { goals } })
   })
 })
-scoreSchema.post('remove', (score, done) => {
-  return forkHandlers.playerStatsUpdate(score).then(() => {
-    return done()
-  }).catch((err) => {
-    return done(err)
+
+scoreSchema.post('remove', (doc) => {
+  const Player = mongoose.model('player')
+  const Score = mongoose.model('score')
+  return Score.count({ player: doc.player })
+  .then((goals) => {
+    return Player.update({ _id: doc.player }, { $set: { goals } })
   })
 })
 

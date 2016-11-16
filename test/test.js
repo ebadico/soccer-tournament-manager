@@ -67,8 +67,3 @@ require('./attendance/attendance.model.test.js')
 
 require('./post/post.model.test.js')
 require('./post/post.api.test.js')
-
-/**
- * CLEANUPS
- */
-require('./cleanup')
